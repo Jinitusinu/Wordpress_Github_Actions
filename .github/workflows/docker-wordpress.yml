@@ -1,0 +1,50 @@
+name: Docker-WordPress CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image
+        run: |
+          docker build -t wp-test:latest .
+
+      - name: Run WordPress container
+        run: |
+          docker run -d -p 8080:80 --name wp-test wp-test:latest
+          sleep 10
+
+      - name: Copy health check script into container
+        run: |
+          docker cp healthcheck.sh wp-test:/healthcheck.sh
+          docker exec wp-test chmod +x /healthcheck.sh
+
+      - name: Run health check
+        run: |
+          docker exec wp-test /healthcheck.sh
+
+      - name: Retrieve health result
+        run: |
+          docker cp wp-test:/health.txt .
+          cat health.txt
+
+      - name: Upload health artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: health-report
+          path: health.txt
+
+      - name: Teardown container
+        run: |
+          docker rm -f wp-test
