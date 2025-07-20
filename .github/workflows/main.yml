@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-test-linux:
-    runs-on: self-hosted  # Your Linux self-hosted runner
+    runs-on: self-hosted   # Your Linux self-hosted runner label
     name: Build & Test on Linux
     steps:
       - name: Checkout Code
@@ -38,7 +38,7 @@ jobs:
           path: tests/reports/login_test_report.xml
 
   build-and-test-windows:
-    runs-on: self-hosted  # Your Windows self-hosted runner
+    runs-on: self-hosted  # Your Windows self-hosted runner label
     name: Build & Test on Windows
     steps:
       - name: Checkout Code
