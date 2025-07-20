@@ -1,0 +1,91 @@
+name: ICA2 CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test-linux:
+    runs-on: self-hosted  # On Ubuntu self-hosted runner
+    name: Build & Test on Linux
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Start WordPress and MySQL Containers
+        run: docker-compose up -d
+
+      - name: Run Selenium Tests
+        run: |
+          pip install -r tests/requirements.txt
+          python tests/selenium_login_test.py
+
+      - name: Upload Test Report as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: selenium-login-report-linux
+          path: tests/reports/login_test_report.xml
+
+  build-and-test-windows:
+    runs-on: self-hosted  # On Windows self-hosted runner
+    name: Build & Test on Windows
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Start WordPress and MySQL (Windows Compatible)
+        run: docker-compose up -d
+
+      - name: Run Selenium Tests
+        run: |
+          pip install -r tests/requirements.txt
+          python tests/selenium_login_test.py
+
+      - name: Upload Test Report as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: selenium-login-report-windows
+          path: tests/reports/login_test_report.xml
+
+  docker-build-push:
+    needs: [build-and-test-linux, build-and-test-windows]
+    runs-on: ubuntu-latest
+    name: Build & Push Docker Image
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}/wordpress-app:latest .
+          docker push ghcr.io/${{ github.repository }}/wordpress-app:latest
+
+  deploy:
+    needs: docker-build-push
+    runs-on: ubuntu-latest
+    name: Deploy Application
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Simulate Deployment
+        run: |
+          echo "Pulling image..."
+          docker pull ghcr.io/${{ github.repository }}/wordpress-app:latest
+          echo "Running deployment script..."
+          echo "Deployment to production successful!"
