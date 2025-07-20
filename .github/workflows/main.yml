@@ -2,15 +2,15 @@ name: Build & Test on Self-Hosted Runners
 
 on:
   push:
-    branches: [2.1-branch]   # your branch name
+    branches: [2.1-branch]  # replace with your branch name if different
   pull_request:
     branches: [2.1-branch]
 
 jobs:
   build-test-windows:
     name: Build & Test on Windows Runner
-    runs-on: self-hosted
-    if: runner.os == 'Windows'
+    runs-on: [self-hosted, windows]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,10 +18,10 @@ jobs:
       - name: Setup Python 3.10 (Windows)
         uses: actions/setup-python@v5
         with:
-          python-version: 3.10
+          python-version: '3.10'
 
       - name: Install Python dependencies (Windows)
-        run: pip install -r tests/requirements.txt
+        run: pip install --upgrade pip && pip install -r tests/requirements.txt
 
       - name: Run Selenium login tests (Windows)
         run: pytest tests/selenium_login_test.py --junitxml=tests/reports/login_test_report.xml
@@ -34,8 +34,8 @@ jobs:
 
   build-test-linux:
     name: Build & Test on Linux Runner
-    runs-on: self-hosted
-    if: runner.os == 'Linux'
+    runs-on: [self-hosted, linux]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
       - name: Setup Python 3.10 (Linux)
         uses: actions/setup-python@v5
         with:
-          python-version: 3.10
+          python-version: '3.10'
 
       - name: Upgrade pip (Linux)
         run: python3 -m pip install --upgrade pip
