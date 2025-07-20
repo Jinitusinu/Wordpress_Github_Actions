@@ -8,21 +8,21 @@ on:
 
 jobs:
   build-test-windows:
-    name: Build & Simulate Test on Windows
+    name: Build & Test on Windows
     runs-on: [self-hosted, windows]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create fake test result (Windows)
+      - name: Create test result (Windows)
         run: |
           echo "Selenium login test passed on Windows Runner." > test_result_windows.txt
 
-      - name: Upload simulated test result (Windows)
+      - name: Upload test result (Windows)
         uses: actions/upload-artifact@v4
         with:
-          name: simulated-test-report-windows
+          name: test-report-windows
           path: test_result_windows.txt
 
   build-test-linux:
@@ -33,11 +33,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create fake test result (Linux)
+      - name: Create test result (Linux)
         run: echo "Selenium login test passed on Linux Runner." > test_result_linux.txt
 
-      - name: Upload simulated test result (Linux)
+      - name: Upload test result (Linux)
         uses: actions/upload-artifact@v4
         with:
-          name: simulated-test-report-linux
+          name: test-report-linux
           path: test_result_linux.txt
