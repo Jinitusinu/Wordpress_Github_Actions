@@ -1,4 +1,4 @@
-name: ICA2 CI/CD Pipeline (Self-hosted Linux & Windows)
+name: ICA2 CI/CD Pipeline (Windows Self-Hosted Runners)
 
 on:
   push:
@@ -7,68 +7,68 @@ on:
     branches: [2.1-branch]
 
 jobs:
-  build-and-test-linux:
-    runs-on: self-hosted    # Label for your Linux self-hosted runner
-    name: Build & Test on Linux
+  build-and-test-windows-1:
+    runs-on: self-hosted
+    name: Build & Test on Windows Runner 1
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Verify Python Version
-        run: python3 --version
-
-      - name: Install Dependencies
-        run: pip3 install -r tests/requirements.txt
-
-      - name: Create reports directory
-        run: mkdir -p tests/reports
-
-      - name: Recreate Docker Network & Start Services
-        run: |
-          docker network rm wordpress_github_actions_default || true
-          docker-compose up -d
-
-      - name: Run Selenium Login Test
-        run: pytest tests/selenium_login_test.py --junitxml=tests/reports/login_test_report.xml
-
-      - name: Upload Test Report (Linux)
-        uses: actions/upload-artifact@v4
-        with:
-          name: selenium-login-report-linux
-          path: tests/reports/login_test_report.xml
-
-  build-and-test-windows:
-    runs-on: self-hosted   # Label for your Windows self-hosted runner
-    name: Build & Test on Windows
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Verify Python Version
+      - name: Check Python Version
         run: python --version
 
       - name: Install Dependencies
         run: pip install -r tests/requirements.txt
 
-      - name: Create reports directory
+      - name: Create Reports Directory
         run: mkdir tests\reports
 
-      - name: Recreate Docker Network & Start Services
+      - name: Clean Docker Network & Start Services
         run: |
           docker network rm wordpress_github_actions_default || exit 0
           docker-compose up -d
 
-      - name: Run Selenium Login Test
+      - name: Run Selenium Login Tests
         run: pytest tests/selenium_login_test.py --junitxml=tests/reports/login_test_report.xml
 
-      - name: Upload Test Report (Windows)
+      - name: Upload Test Report
         uses: actions/upload-artifact@v4
         with:
-          name: selenium-login-report-windows
+          name: selenium-login-report-windows-1
+          path: tests/reports/login_test_report.xml
+
+  build-and-test-windows-2:
+    runs-on: self-hosted
+    name: Build & Test on Windows Runner 2
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Check Python Version
+        run: python --version
+
+      - name: Install Dependencies
+        run: pip install -r tests/requirements.txt
+
+      - name: Create Reports Directory
+        run: mkdir tests\reports
+
+      - name: Clean Docker Network & Start Services
+        run: |
+          docker network rm wordpress_github_actions_default || exit 0
+          docker-compose up -d
+
+      - name: Run Selenium Login Tests
+        run: pytest tests/selenium_login_test.py --junitxml=tests/reports/login_test_report.xml
+
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: selenium-login-report-windows-2
           path: tests/reports/login_test_report.xml
 
   docker-build-push:
-    needs: [build-and-test-linux, build-and-test-windows]
+    needs: [build-and-test-windows-1, build-and-test-windows-2]
     runs-on: ubuntu-latest
     name: Build & Push Docker Image
     permissions:
@@ -98,7 +98,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Simulated Deployment
+      - name: Simulate Deployment
         run: |
           echo "Pulling image..."
           docker pull ghcr.io/${{ github.repository }}/wordpress-app:latest
