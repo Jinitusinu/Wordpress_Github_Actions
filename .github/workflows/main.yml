@@ -2,9 +2,9 @@ name: ICA2 CI/CD Pipeline
 
 on:
   push:
-    branches: [5.3]
+    branches: [2.1-branch]
   pull_request:
-    branches: [5.3]
+    branches: [2.1-branch]
 
 jobs:
   build-and-test-linux:
