@@ -1,10 +1,10 @@
-name: ICA2 CI/CD Pipeline (Windows Self-Hosted Runners)
+name: CI/CD Pipeline (Windows & Linux Self-Hosted Runners)
 
 on:
   push:
-    branches: [2.1-branch]
+    branches: [5.3]
   pull_request:
-    branches: [2.1-branch]
+    branches: [5.3]
 
 jobs:
   build-and-test-windows-1:
@@ -22,11 +22,13 @@ jobs:
 
       - name: Create Reports Directory
         run: mkdir tests\reports
+        shell: powershell
 
       - name: Clean Docker Network & Start Services
         run: |
-          docker network rm wordpress_github_actions_default || exit 0
+          try { docker network rm wordpress_github_actions_default } catch { }
           docker-compose up -d
+        shell: powershell
 
       - name: Run Selenium Login Tests
         run: pytest tests/selenium_login_test.py --junitxml=tests/reports/login_test_report.xml
@@ -52,11 +54,13 @@ jobs:
 
       - name: Create Reports Directory
         run: mkdir tests\reports
+        shell: powershell
 
       - name: Clean Docker Network & Start Services
         run: |
-          docker network rm wordpress_github_actions_default || exit 0
+          try { docker network rm wordpress_github_actions_default } catch { }
           docker-compose up -d
+        shell: powershell
 
       - name: Run Selenium Login Tests
         run: pytest tests/selenium_login_test.py --junitxml=tests/reports/login_test_report.xml
