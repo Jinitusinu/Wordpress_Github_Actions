@@ -1,31 +1,29 @@
-name: ICA2 CI/CD Pipeline
+name: ICA2 CI/CD Pipeline (Self-hosted Linux & Windows)
 
 on:
   push:
-    branches: [2.1-branch]  # Update if using another versioned branch
+    branches: [2.1-branch]
   pull_request:
     branches: [2.1-branch]
 
 jobs:
   build-and-test-linux:
-    runs-on: self-hosted  # Ubuntu self-hosted runner
+    runs-on: self-hosted  # Your Linux self-hosted runner
     name: Build & Test on Linux
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
+      - name: Verify Python Version
+        run: python3 --version
 
-      - name: Install Python Dependencies
-        run: pip install -r tests/requirements.txt
+      - name: Install Dependencies
+        run: pip3 install -r tests/requirements.txt
 
       - name: Create reports directory
         run: mkdir -p tests/reports
 
-      - name: Recreate Docker Network and Start Services
+      - name: Recreate Docker Network & Start Services
         run: |
           docker network rm wordpress_github_actions_default || true
           docker-compose up -d
@@ -33,31 +31,29 @@ jobs:
       - name: Run Selenium Login Test
         run: pytest tests/selenium_login_test.py --junitxml=tests/reports/login_test_report.xml
 
-      - name: Upload Test Report as Artifact (Linux)
+      - name: Upload Test Report (Linux)
         uses: actions/upload-artifact@v4
         with:
           name: selenium-login-report-linux
           path: tests/reports/login_test_report.xml
 
   build-and-test-windows:
-    runs-on: self-hosted  # Windows self-hosted runner
+    runs-on: self-hosted  # Your Windows self-hosted runner
     name: Build & Test on Windows
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
+      - name: Verify Python Version
+        run: python --version
 
-      - name: Install Python Dependencies
+      - name: Install Dependencies
         run: pip install -r tests/requirements.txt
 
       - name: Create reports directory
         run: mkdir tests\reports
 
-      - name: Recreate Docker Network and Start Services
+      - name: Recreate Docker Network & Start Services
         run: |
           docker network rm wordpress_github_actions_default || exit 0
           docker-compose up -d
@@ -65,7 +61,7 @@ jobs:
       - name: Run Selenium Login Test
         run: pytest tests/selenium_login_test.py --junitxml=tests/reports/login_test_report.xml
 
-      - name: Upload Test Report as Artifact (Windows)
+      - name: Upload Test Report (Windows)
         uses: actions/upload-artifact@v4
         with:
           name: selenium-login-report-windows
