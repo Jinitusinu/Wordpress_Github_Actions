@@ -1,110 +1,61 @@
-name: CI/CD Pipeline (Windows & Linux Self-Hosted Runners)
+name: Build & Test on Self-Hosted Runners
 
 on:
   push:
-    branches: [2.1-branch]
+    branches: [2.1-branch]   # your branch name
   pull_request:
     branches: [2.1-branch]
 
 jobs:
-  build-and-test-windows-1:
+  build-test-windows:
+    name: Build & Test on Windows Runner
     runs-on: self-hosted
-    name: Build & Test on Windows Runner 1
+    if: runner.os == 'Windows'
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check Python Version
-        run: python --version
+      - name: Setup Python 3.10 (Windows)
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.10
 
-      - name: Install Dependencies
+      - name: Install Python dependencies (Windows)
         run: pip install -r tests/requirements.txt
 
-      - name: Create Reports Directory
-        run: mkdir tests\reports
-        shell: powershell
-
-      - name: Clean Docker Network & Start Services
-        run: |
-          try { docker network rm wordpress_github_actions_default } catch { }
-          docker-compose up -d
-        shell: powershell
-
-      - name: Run Selenium Login Tests
+      - name: Run Selenium login tests (Windows)
         run: pytest tests/selenium_login_test.py --junitxml=tests/reports/login_test_report.xml
 
-      - name: Upload Test Report
+      - name: Upload Selenium test report (Windows)
         uses: actions/upload-artifact@v4
         with:
-          name: selenium-login-report-windows-1
+          name: selenium-login-report-windows
           path: tests/reports/login_test_report.xml
 
-  build-and-test-windows-2:
+  build-test-linux:
+    name: Build & Test on Linux Runner
     runs-on: self-hosted
-    name: Build & Test on Windows Runner 2
+    if: runner.os == 'Linux'
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check Python Version
-        run: python --version
+      - name: Setup Python 3.10 (Linux)
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.10
 
-      - name: Install Dependencies
-        run: pip install -r tests/requirements.txt
+      - name: Upgrade pip (Linux)
+        run: python3 -m pip install --upgrade pip
 
-      - name: Create Reports Directory
-        run: mkdir tests\reports
-        shell: powershell
+      - name: Install Python dependencies (Linux)
+        run: python3 -m pip install -r tests/requirements.txt
 
-      - name: Clean Docker Network & Start Services
-        run: |
-          try { docker network rm wordpress_github_actions_default } catch { }
-          docker-compose up -d
-        shell: powershell
+      - name: Run Selenium login tests (Linux)
+        run: python3 -m pytest tests/selenium_login_test.py --junitxml=tests/reports/login_test_report.xml
 
-      - name: Run Selenium Login Tests
-        run: pytest tests/selenium_login_test.py --junitxml=tests/reports/login_test_report.xml
-
-      - name: Upload Test Report
+      - name: Upload Selenium test report (Linux)
         uses: actions/upload-artifact@v4
         with:
-          name: selenium-login-report-windows-2
+          name: selenium-login-report-linux
           path: tests/reports/login_test_report.xml
-
-  docker-build-push:
-    needs: [build-and-test-windows-1, build-and-test-windows-2]
-    runs-on: ubuntu-latest
-    name: Build & Push Docker Image
-    permissions:
-      packages: write
-      contents: read
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and Push Docker Image
-        run: |
-          docker build -t ghcr.io/${{ github.repository }}/wordpress-app:latest .
-          docker push ghcr.io/${{ github.repository }}/wordpress-app:latest
-
-  deploy:
-    needs: docker-build-push
-    runs-on: ubuntu-latest
-    name: Deploy Application
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Simulate Deployment
-        run: |
-          echo "Pulling image..."
-          docker pull ghcr.io/${{ github.repository }}/wordpress-app:latest
-          echo "Deploying to production..."
-          echo "✅ Deployment complete!"
